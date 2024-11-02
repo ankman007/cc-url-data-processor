@@ -29,10 +29,9 @@ def execute_query(query, params=None):
 
 def create_table():
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS todo_db (
-    todo_id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    completed BOOLEAN NOT NULL DEFAULT FALSE
+    CREATE TABLE IF NOT EXISTS url_metadata (
+    url VARCHAR(255) PRIMARY KEY,
+    metadata VARCHAR(255) NOT NULL,
     );
     """
     try:
