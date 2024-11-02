@@ -1,18 +1,19 @@
 from loguru import logger
-import traceback
-from app.models import ToDo 
-from app.database import get_connection, create_table
-from fastapi import APIRouter, HTTPException
+from app.database import execute_query
+from fastapi import APIRouter
+from psycopg2 import DatabaseError
 
 router = APIRouter()
 
-@router.get('/')
-def index():
+@router.get('/get-url-metadata/{url}')
+def get_url_metadata(url: str):
+    query = """
+    SELECT url, metadata 
+    FROM url_metadata 
+    WHERE url = %s;"""
     try:
-        conn = get_connection()
-        detail = "Database connection made successfully." if conn else "Encountered error when connecting to database."
-        create_table(conn)
-        return {"message": detail}
-    except Exception as e:
-        logger.error(f"Error occurred: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        result = execute_query(query, url)
+        return result
+    except DatabaseError as e:
+        logger.error(f"Could not fetch data for {url}", e)
+    
