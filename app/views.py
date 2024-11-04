@@ -16,10 +16,10 @@ async def get_url_metadata(url: str):
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query, (url,))
-                result = cursor.fetchone()
+                results = cursor.fetchall()  
 
-        if result:
-            return {"url": result[0], "metadata": result[1]}
+        if results:
+            return [{"url": row[0], "metadata": row[1]} for row in results]
         else:
             raise HTTPException(status_code=404, detail="URL metadata not found.")
     

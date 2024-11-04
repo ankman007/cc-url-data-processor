@@ -7,7 +7,7 @@ def create_app():
     app = FastAPI()
     
     create_table()
-    # download_and_extract_cdx_files()
+    download_and_extract_cdx_files()
     process_cdx_directory('common_crawl_data')
     
     from app.views import router as todo_router

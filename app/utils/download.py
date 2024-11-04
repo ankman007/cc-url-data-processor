@@ -2,7 +2,14 @@ import os
 import requests
 import gzip
 import shutil
-from app.utils.paths import get_warc_file_path
+
+def get_warc_file_path() -> list:
+    current_dir = os.path.dirname(__file__)
+    file_path = os.path.join(current_dir, "cc-index.paths")
+    
+    with open(file_path, 'r') as file:
+        lines = [line.strip() for line in file.readlines()]
+        return lines
 
 def download_file(url, destination_path):
     response = requests.get(url, stream=True)

@@ -12,10 +12,13 @@ def insert_extracted_data(extracted_data):
     # ON CONFLICT (url) DO UPDATE
     # SET metadata = EXCLUDED.metadata;
     
-    records_to_insert = [
-        (entry.get("url"), json.dumps(entry)) for entry in extracted_data if entry.get("url")
-    ]
-    
+    records_to_insert = []
+    for entry in extracted_data:
+        url = entry.get("url")
+        if url:
+            metadata = {key: value for key, value in entry.items() if key != "url"}
+            records_to_insert.append((url, json.dumps(metadata)))
+
     if not records_to_insert:
         logger.info("No records to insert.")
         return

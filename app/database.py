@@ -15,7 +15,7 @@ def get_connection():
         logger.info("Database connection established successfully.")
         return conn
     except psycopg2.OperationalError as e:
-        logger.error("Encountered error when establishing database connection.", exc_info=True)
+        logger.error(f"Encountered error when establishing database connection. {e}", exc_info=True)
         raise
 
 def execute_query(query, params=None):
@@ -30,7 +30,7 @@ def create_table():
     create_table_query = """
     CREATE TABLE IF NOT EXISTS url_metadata (
         id SERIAL PRIMARY KEY,
-        url VARCHAR(255) ,
+        url TEXT,
         metadata TEXT
     );
     """
@@ -38,5 +38,5 @@ def create_table():
         execute_query(create_table_query)
         logger.info("Table created successfully.")
     except Exception as e:
-        logger.error("Error creating table", exc_info=True)
+        logger.error(f"Error creating table {e}", exc_info=True)
 
