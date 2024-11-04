@@ -1,3 +1,4 @@
 __pycache__/
 /kenv
 common_crawl_data/*.cdx
+common_crawl_data/*.gz

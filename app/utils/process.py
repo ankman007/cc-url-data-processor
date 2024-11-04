@@ -1,30 +1,59 @@
+import os
 import json
 from loguru import logger
-from app.database import execute_query
+from psycopg2.extras import execute_batch
+from app.database import get_connection
+
+def parse_cdx_line(line):
+    parts = line.strip().split(' ', 2)
+    if len(parts) > 2:
+        try:
+            return json.loads(parts[2])
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e} - line content: {line}")
+    return None
+
+
+def insert_extracted_data(extracted_data):
+    insert_query = """
+    INSERT INTO url_metadata (url, metadata)
+    VALUES (%s, %s)
+    ON CONFLICT (url) DO UPDATE
+    SET metadata = EXCLUDED.metadata;
+    """
+    
+    records_to_insert = [
+        (entry.get("url"), json.dumps(entry)) for entry in extracted_data if entry.get("url")
+    ]
+    
+    if not records_to_insert:
+        logger.info("No records to insert.")
+        return
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                execute_batch(cursor, insert_query, records_to_insert)
+            conn.commit()
+        logger.info(f"Batch insert successful. {len(records_to_insert)} records inserted/updated.")
+    except Exception as e:
+        logger.error(f"Error during batch insert: {e}")
 
 def process_cdx_file(input_file, limit=None):
     logger.info(f"Starting to process CDX file: {input_file}")
-
     extracted_data = []
 
     try:
         with open(input_file, 'r') as file:
             for i, line in enumerate(file):
                 if limit is not None and i >= limit:
-                    logger.info(f"Limit of {limit} reached; stopping processing.")
+                    logger.info(f"Limit of {limit} reached for file {input_file}; stopping processing.")
                     break
-
-                parts = line.strip().split(' ', 2)
-
-                if len(parts) > 2:
-                    json_data = parts[2]
-                    try:
-                        data_dict = json.loads(json_data)
-                        extracted_data.append(data_dict)
-                        logger.debug(f"Extracted data from line {i}: {data_dict}")
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Error decoding JSON in line {i}: {e} - line content: {line}")
-
+                data = parse_cdx_line(line)
+                if data:
+                    extracted_data.append(data)
+                    logger.debug(f"Extracted data from line {i}: {data}")
+                    
     except FileNotFoundError:
         logger.error(f"File not found: {input_file}")
         return
@@ -32,21 +61,11 @@ def process_cdx_file(input_file, limit=None):
         logger.error(f"An error occurred while processing the file: {e}")
         return
 
-    insert_query = """
-    INSERT INTO url_metadata (url, metadata)
-    VALUES (%s, %s)
-    ON CONFLICT (url) DO UPDATE
-    SET metadata = EXCLUDED.metadata;
-    """
+    insert_extracted_data(extracted_data)
+    logger.info(f"Inserted {len(extracted_data)} records from {input_file} into the database.")
 
-    for entry in extracted_data:
-        url = entry.get("url")
-        if url:
-            metadata = json.dumps(entry)  
-            try:
-                execute_query(insert_query, (url, metadata))
-                logger.info(f"Inserted/updated metadata for URL: {url}")
-            except Exception as e:
-                logger.error(f"Error inserting data for URL: {url} - {e}")
-
-    logger.info(f"Inserted {len(extracted_data)} records into the database.")
+def process_cdx_directory(directory, limit_per_file=200):
+    for filename in os.listdir(directory):
+        if filename.endswith('.cdx'):
+            filepath = os.path.join(directory, filename)
+            process_cdx_file(filepath, limit=limit_per_file)
