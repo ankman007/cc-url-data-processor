@@ -24,7 +24,7 @@ def decompress_file(input_path, output_path):
         with open(output_path, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
 
-def download_and_extract_cdx_files(max_files_to_process=2):
+def download_and_extract_cdx_files(max_files_to_process=5):
     download_dir = 'common_crawl_data'
     base_url = 'https://data.commoncrawl.org/'
     processed_file = 'processed_files.txt'
@@ -66,3 +66,5 @@ def download_and_extract_cdx_files(max_files_to_process=2):
                 print(f"Failed to download {file_name}: {e}")
             except Exception as e:
                 print(f"An error occurred with {file_name}: {e}")
+
+download_and_extract_cdx_files()

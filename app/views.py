@@ -5,7 +5,7 @@ from psycopg2 import DatabaseError
 
 router = APIRouter()
 
-@router.get('/{url}')
+@router.get('/get-url-metadata/{url}')
 async def get_url_metadata(url: str):
     query = """
     SELECT url, metadata 

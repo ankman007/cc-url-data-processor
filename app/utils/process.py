@@ -66,8 +66,10 @@ def process_cdx_file(input_file, limit=None):
     insert_extracted_data(extracted_data)
     # return extracted_data
 
-def process_cdx_directory(directory, limit_per_file=5):
+def process_cdx_directory(directory, limit_per_file=100):
     for filename in os.listdir(directory):
         if filename.endswith('.cdx'):
             filepath = os.path.join(directory, filename)
             process_cdx_file(filepath, limit=limit_per_file)
+
+process_cdx_directory('common_crawl_data')
