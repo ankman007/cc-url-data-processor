@@ -5,18 +5,19 @@ from psycopg2 import DatabaseError
 
 router = APIRouter()
 
-@router.get('/get-url-metadata/{url}')
-def get_url_metadata(url: str):
+@router.get('/{url}')
+async def get_url_metadata(url: str):
     query = """
     SELECT url, metadata 
     FROM url_metadata 
-    WHERE url = %s;"""
+    WHERE url = %s;
+    """
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query, (url,))
-                result = cursor.fetchone()  
-                
+                result = cursor.fetchone()
+
         if result:
             return {"url": result[0], "metadata": result[1]}
         else:

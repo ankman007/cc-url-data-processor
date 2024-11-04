@@ -29,8 +29,9 @@ def execute_query(query, params=None):
 def create_table():
     create_table_query = """
     CREATE TABLE IF NOT EXISTS url_metadata (
-        url VARCHAR(255) PRIMARY KEY,
-        metadata VARCHAR(255) NOT NULL
+        id SERIAL PRIMARY KEY,
+        url VARCHAR(255) ,
+        metadata TEXT
     );
     """
     try:

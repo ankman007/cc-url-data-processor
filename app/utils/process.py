@@ -1,26 +1,16 @@
-import os
+import os, psycopg2
 import json
 from loguru import logger
 from psycopg2.extras import execute_batch
 from app.database import get_connection
 
-def parse_cdx_line(line):
-    parts = line.strip().split(' ', 2)
-    if len(parts) > 2:
-        try:
-            return json.loads(parts[2])
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON: {e} - line content: {line}")
-    return None
-
-
 def insert_extracted_data(extracted_data):
     insert_query = """
     INSERT INTO url_metadata (url, metadata)
     VALUES (%s, %s)
-    ON CONFLICT (url) DO UPDATE
-    SET metadata = EXCLUDED.metadata;
     """
+    # ON CONFLICT (url) DO UPDATE
+    # SET metadata = EXCLUDED.metadata;
     
     records_to_insert = [
         (entry.get("url"), json.dumps(entry)) for entry in extracted_data if entry.get("url")
@@ -39,6 +29,15 @@ def insert_extracted_data(extracted_data):
     except Exception as e:
         logger.error(f"Error during batch insert: {e}")
 
+def parse_cdx_line(line):
+    parts = line.strip().split(' ', 2)
+    if len(parts) > 2:
+        try:
+            return json.loads(parts[2])
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON: {e} - line content: {line}")
+    return None
+
 def process_cdx_file(input_file, limit=None):
     logger.info(f"Starting to process CDX file: {input_file}")
     extracted_data = []
@@ -52,7 +51,7 @@ def process_cdx_file(input_file, limit=None):
                 data = parse_cdx_line(line)
                 if data:
                     extracted_data.append(data)
-                    logger.debug(f"Extracted data from line {i}: {data}")
+                    # logger.debug(f"Extracted data from line {i}: {data}")
                     
     except FileNotFoundError:
         logger.error(f"File not found: {input_file}")
@@ -62,9 +61,9 @@ def process_cdx_file(input_file, limit=None):
         return
 
     insert_extracted_data(extracted_data)
-    logger.info(f"Inserted {len(extracted_data)} records from {input_file} into the database.")
+    # return extracted_data
 
-def process_cdx_directory(directory, limit_per_file=200):
+def process_cdx_directory(directory, limit_per_file=5):
     for filename in os.listdir(directory):
         if filename.endswith('.cdx'):
             filepath = os.path.join(directory, filename)
