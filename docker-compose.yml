@@ -22,7 +22,3 @@ services:
 
 volumes:
   postgres_data: {}
-
-networks:
-  my_network:
-    driver: bridge
